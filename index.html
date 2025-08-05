@@ -7,13 +7,13 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     /* --- Система тем на CSS-переменных --- */
-    :root, body[data-theme="purple"] { --primary-color: #a855f7; --primary-hover: #9333ea; --text-accent: #c084fc; --body-bg: #030712; --container-bg: #111827; --cell-bg: #1f2937; --grid-line: #4b5563; --user-input: #67e8f9; --given-text: #ffffff; --error-text: #f87171; --highlight-bg: var(--primary-color); --highlight-text: var(--given-text); --area-highlight-bg: rgba(168, 85, 247, 0.06); --active-cell-bg: rgba(168, 85, 247, 0.12); }
-    body[data-theme="orange"] { --primary-color: #f97316; --primary-hover: #ea580c; --text-accent: #fb923c; --body-bg: #0c0a09; --container-bg: #1c1917; --cell-bg: #292524; --grid-line: #57534e; --user-input: #fdba74; --given-text: #ffffff; --error-text: #f87171; --highlight-bg: var(--primary-color); --highlight-text: var(--given-text); --area-highlight-bg: rgba(249, 115, 22, 0.06); --active-cell-bg: rgba(249, 115, 22, 0.12); }
-    body[data-theme="green"] { --primary-color: #22c55e; --primary-hover: #16a34a; --text-accent: #4ade80; --body-bg: #050f09; --container-bg: #0f1a14; --cell-bg: #1a2e24; --grid-line: #3f6251; --user-input: #86efac; --given-text: #ffffff; --error-text: #f87171; --highlight-bg: var(--primary-color); --highlight-text: var(--given-text); --area-highlight-bg: rgba(34, 197, 94, 0.06); --active-cell-bg: rgba(34, 197, 94, 0.12); }
-    body[data-theme="light"] { --primary-color: #a16207; --primary-hover: #854d0e; --text-accent: #a16207; --body-bg: #f1f5f9; --container-bg: #ffffff; --cell-bg: #f8fafc; --grid-line: #e2e8f0; --user-input: #1e40af; --given-text: #1e293b; --error-text: #dc2626; --highlight-bg: #fde047; --highlight-text: var(--primary-hover); --area-highlight-bg: rgba(161, 98, 7, 0.05); --active-cell-bg: rgba(161, 98, 7, 0.1); }
-    body[data-theme="black"] { --primary-color: #6b7280; --primary-hover: #4b5563; --text-accent: #d1d5db; --body-bg: #000000; --container-bg: #111827; --cell-bg: #1f2937; --grid-line: #4b5563; --user-input: #f9fafb; --given-text: #ffffff; --error-text: #ef4444; --highlight-bg: #9ca3af; --highlight-text: #000000; --area-highlight-bg: rgba(255, 255, 255, 0.05); --active-cell-bg: rgba(255, 255, 255, 0.1); }
-    body[data-theme="pink"] { --primary-color: #ec4899; --primary-hover: #db2777; --text-accent: #f472b6; --body-bg: #1a0810; --container-bg: #2a0f1c; --cell-bg: #3a1628; --grid-line: #6d284f; --user-input: #fbcfe8; --given-text: #ffffff; --error-text: #fca5a5; --highlight-bg: var(--primary-color); --highlight-text: var(--given-text); --area-highlight-bg: rgba(236, 72, 153, 0.06); --active-cell-bg: rgba(236, 72, 153, 0.12); }
-    body[data-theme="turquoise"] { --primary-color: #14b8a6; --primary-hover: #0d9488; --text-accent: #2dd4bf; --body-bg: #040f0d; --container-bg: #0a1a17; --cell-bg: #112e29; --grid-line: #1f6259; --user-input: #99f6e4; --given-text: #ffffff; --error-text: #fca5a5; --highlight-bg: var(--primary-color); --highlight-text: #040f0d; --area-highlight-bg: rgba(20, 184, 166, 0.06); --active-cell-bg: rgba(20, 184, 166, 0.12); }
+    :root, body[data-theme="purple"] { --primary-color: #a855f7; --primary-hover: #9333ea; --text-accent: #c084fc; --body-bg: #030712; --container-bg: #111827; --cell-bg: #1f2937; --grid-line: #4b5563; --given-text: #ffffff; --error-text: #f87171; --highlight-bg: var(--primary-color); --highlight-text: var(--given-text); --area-highlight-bg: rgba(168, 85, 247, 0.06); --active-cell-bg: rgba(168, 85, 247, 0.12); }
+    body[data-theme="orange"] { --primary-color: #f97316; --primary-hover: #ea580c; --text-accent: #fb923c; --body-bg: #0c0a09; --container-bg: #1c1917; --cell-bg: #292524; --grid-line: #57534e; --given-text: #ffffff; --error-text: #f87171; --highlight-bg: var(--primary-color); --highlight-text: var(--given-text); --area-highlight-bg: rgba(249, 115, 22, 0.06); --active-cell-bg: rgba(249, 115, 22, 0.12); }
+    body[data-theme="green"] { --primary-color: #22c55e; --primary-hover: #16a34a; --text-accent: #4ade80; --body-bg: #050f09; --container-bg: #0f1a14; --cell-bg: #1a2e24; --grid-line: #3f6251; --given-text: #ffffff; --error-text: #f87171; --highlight-bg: var(--primary-color); --highlight-text: var(--given-text); --area-highlight-bg: rgba(34, 197, 94, 0.06); --active-cell-bg: rgba(34, 197, 94, 0.12); }
+    body[data-theme="light"] { --primary-color: #a16207; --primary-hover: #854d0e; --text-accent: #a16207; --body-bg: #f1f5f9; --container-bg: #ffffff; --cell-bg: #f8fafc; --grid-line: #e2e8f0; --given-text: #374151; --error-text: #dc2626; --highlight-bg: #fde047; --highlight-text: var(--primary-hover); --area-highlight-bg: rgba(161, 98, 7, 0.05); --active-cell-bg: rgba(161, 98, 7, 0.1); }
+    body[data-theme="black"] { --primary-color: #6b7280; --primary-hover: #4b5563; --text-accent: #d1d5db; --body-bg: #000000; --container-bg: #111827; --cell-bg: #1f2937; --grid-line: #4b5563; --given-text: #ffffff; --error-text: #ef4444; --highlight-bg: #9ca3af; --highlight-text: #000000; --area-highlight-bg: rgba(255, 255, 255, 0.05); --active-cell-bg: rgba(255, 255, 255, 0.1); }
+    body[data-theme="pink"] { --primary-color: #ec4899; --primary-hover: #db2777; --text-accent: #f472b6; --body-bg: #1a0810; --container-bg: #2a0f1c; --cell-bg: #3a1628; --grid-line: #6d284f; --given-text: #ffffff; --error-text: #fca5a5; --highlight-bg: var(--primary-color); --highlight-text: var(--given-text); --area-highlight-bg: rgba(236, 72, 153, 0.06); --active-cell-bg: rgba(236, 72, 153, 0.12); }
+    body[data-theme="turquoise"] { --primary-color: #14b8a6; --primary-hover: #0d9488; --text-accent: #2dd4bf; --body-bg: #040f0d; --container-bg: #0a1a17; --cell-bg: #112e29; --grid-line: #1f6259; --given-text: #ffffff; --error-text: #fca5a5; --highlight-bg: var(--primary-color); --highlight-text: #040f0d; --area-highlight-bg: rgba(20, 184, 166, 0.06); --active-cell-bg: rgba(20, 184, 166, 0.12); }
 
     /* --- Общие стили --- */
     body { background-color: var(--body-bg); color: var(--text-accent); transition: background-color 0.3s; }
@@ -26,9 +26,13 @@
     .main-button { background-color: var(--primary-color); color: white; }
     .main-button:hover { background-color: var(--primary-hover); }
     .grid-container { display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 2px; position: relative; width: 100%; padding: 3px; border-radius: 12px; background-color: var(--grid-line); }
-    .cell { transition: background-color 0.2s ease-in-out; width: 100%; height: 0; padding-bottom: 100%; position: relative; border: none; border-radius: 6px; font-size: clamp(1rem, 4.5vw, 1.75rem); font-weight: 500; caret-color: transparent; background-color: var(--cell-bg); }
+    .cell { transition: background-color 0.2s ease-in-out; width: 100%; height: 0; padding-bottom: 100%; position: relative; border: none; border-radius: 6px; font-size: clamp(1rem, 4.5vw, 1.75rem); caret-color: transparent; background-color: var(--cell-bg); }
     .cell-content { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
-    .error .cell-content, .given .cell-content { font-weight: 700; }
+    .error .cell-content { color: var(--error-text); }
+    /* ИСПРАВЛЕНИЕ: Чёткое разделение стилей */
+    .given .cell-content { color: var(--given-text); font-weight: 700; }
+    .user-input .cell-content { color: var(--primary-color); font-weight: 500; }
+    
     .grid-separator { position: absolute; z-index: 1; background-color: var(--primary-color); }
     .v-sep-1 { left: 33.333%; right: 33.333%; top: 3px; bottom: 3px; width: 2px; transform: translateX(-1px); }
     .v-sep-2 { left: 66.666%; right: 0; top: 3px; bottom: 3px; width: 2px; transform: translateX(-1px); }
@@ -96,7 +100,6 @@
                 const isExhausted = counts[num] === 9;
                 wrapper.querySelector(".number-counter").textContent = 9 - counts[num];
                 wrapper.classList.toggle("disabled", isExhausted);
-                // ИСПРАВЛЕНИЕ: Автоматически деактивируем инструмент, если он закончился
                 if (isExhausted && activeTool === num) {
                     selectTool(null);
                 }
