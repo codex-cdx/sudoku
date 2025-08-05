@@ -26,10 +26,11 @@
     }
     .given {
       background-color: #4b5563; /* Tailwind gray-600 */
-      color: white;
+      color: white; /* Изначальные цифры - белые */
     }
-    .changed {
-      background-color: #86efac; /* Tailwind green-300 */
+    /* --- ИСПРАВЛЕНИЕ: Новый стиль для цифр, введённых пользователем --- */
+    .user-input {
+      color: #22d3ee; /* Яркий голубой (циан) цвет */
     }
     .highlight {
       box-shadow: 0 0 15px rgba(132, 204, 22, 0.9); /* Tailwind lime-500 */
@@ -117,7 +118,7 @@
       <button id="highlightToggle" class="bg-purple-500 text-white px-4 py-2 rounded-lg glow hover:bg-purple-600 text-sm">Подсветка: ВКЛ</button>
       <button id="check" class="bg-purple-500 text-white px-4 py-2 rounded-lg glow hover:bg-purple-600 text-sm">Проверить</button>
     </div>
-    <p id="message" class="mt-4 text-center text-purple-500 text-sm h-5"></p> <!-- Добавлена высота для стабильности макета -->
+    <p id="message" class="mt-4 text-center text-purple-500 text-sm h-5"></p>
   </div>
 
   <script>
@@ -137,7 +138,6 @@
     let selectedNumber = null;
     let highlightEnabled = true;
 
-    // --- ИСПРАВЛЕНИЕ 1: УЛУЧШЕННАЯ ЛОГИКА ВЗАИМОДЕЙСТВИЯ С ЯЧЕЙКАМИ ---
     function createGrid() {
       gridElement.innerHTML = '';
       grid = Array(9).fill().map(() => Array(9).fill(0));
@@ -149,13 +149,13 @@
           const input = document.createElement('input');
           input.type = 'text';
           input.maxLength = 1;
-          input.className = 'cell text-center text-purple-500 bg-black rounded-md border border-gray-700 focus:border-purple-500';
+          // --- ИЗМЕНЕНИЕ: Убираем изначальный цвет текста, он будет задаваться классами ---
+          input.className = 'cell text-center bg-black rounded-md border border-gray-700 focus:border-purple-500';
           input.readOnly = true;
 
           input.addEventListener('click', () => {
             const isGiven = givenCells.has(`${i},${j}`);
             
-            // Если ячейка "дана" (неизменяема)
             if (isGiven) {
               if (input.value) {
                 selectedNumber = parseInt(input.value);
@@ -165,21 +165,21 @@
               return;
             }
 
-            // Если выбран номер на панели
             if (selectedNumber !== null) {
-              // Если в ячейке уже стоит этот номер, очищаем её (главное исправление)
               if (grid[i][j] === selectedNumber) {
                 input.value = '';
                 grid[i][j] = 0;
-                input.classList.remove('changed', 'error');
-              } else { // Иначе, вставляем новый номер
+                // --- ИСПРАВЛЕНИЕ: Убираем класс при удалении цифры ---
+                input.classList.remove('user-input', 'error');
+              } else {
                 input.value = selectedNumber;
                 grid[i][j] = selectedNumber;
                 input.classList.remove('error');
-                input.classList.add('changed');
+                // --- ИСПРАВЛЕНИЕ: Добавляем класс для введённой цифры ---
+                input.classList.add('user-input');
                 if (highlightEnabled) highlightSimilarNumbers(selectedNumber);
               }
-            } else { // Если номер на панели не выбран, но в ячейке есть число
+            } else { 
               if (input.value) {
                 selectedNumber = parseInt(input.value);
                 updateNumberSelection();
@@ -241,18 +241,11 @@
       inputs.forEach(input => input.classList.remove('highlight'));
     }
 
-    // --- ИСПРАВЛЕНИЕ 2: НАДЁЖНЫЙ АЛГОРИТМ ГЕНЕРАЦИИ ПАЗЛА ---
     function generatePuzzle(difficulty) {
       solution = Array(9).fill().map(() => Array(9).fill(0));
-      
-      // Генерация полного решения Судоку
       fillDiagonal();
       fillRemaining(0, 0); 
-      
-      // Копирование решения в рабочую сетку
       grid = solution.map(row => row.slice());
-      
-      // Удаление ячеек в зависимости от сложности
       const cells = [];
       for (let i = 0; i < 9; i++) {
         for (let j = 0; j < 9; j++) {
@@ -260,14 +253,11 @@
         }
       }
       shuffle(cells);
-
       const removeCount = { easy: 40, medium: 50, hard: 58 }[difficulty];
       for(let i = 0; i < removeCount; i++) {
         const [row, col] = cells[i];
         grid[row][col] = 0;
       }
-      
-      // Обновление набора "данных" ячеек
       givenCells.clear();
       for (let i = 0; i < 9; i++) {
         for (let j = 0; j < 9; j++) {
@@ -276,67 +266,13 @@
           }
         }
       }
-
       renderGrid();
-
-      function fillDiagonal() {
-        for (let box = 0; box < 9; box += 3) {
-          const nums = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-          shuffle(nums);
-          let k = 0;
-          for (let i = 0; i < 3; i++) {
-            for (let j = 0; j < 3; j++) {
-              solution[box + i][box + j] = nums[k++];
-            }
-          }
-        }
-      }
-
-      function isSafe(row, col, num) {
-        for (let x = 0; x < 9; x++) {
-          if (solution[row][x] === num || solution[x][col] === num) return false;
-        }
-        const startRow = row - (row % 3);
-        const startCol = col - (col % 3);
-        for (let i = 0; i < 3; i++) {
-          for (let j = 0; j < 3; j++) {
-            if (solution[startRow + i][startCol + j] === num) return false;
-          }
-        }
-        return true;
-      }
-
-      // Классический алгоритм обратного перебора (backtracking)
-      function fillRemaining(row, col) {
-        if (col >= 9) {
-          row++;
-          col = 0;
-        }
-        if (row >= 9) return true;
-        
-        if (solution[row][col] !== 0) {
-          return fillRemaining(row, col + 1);
-        }
-
-        const nums = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-        shuffle(nums);
-
-        for (let num of nums) {
-          if (isSafe(row, col, num)) {
-            solution[row][col] = num;
-            if (fillRemaining(row, col + 1)) return true;
-            solution[row][col] = 0; // Backtrack
-          }
-        }
-        return false;
-      }
-      
-      function shuffle(array) {
-        for (let i = array.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [array[i], array[j]] = [array[j], array[i]];
-        }
-      }
+      function fillDiagonal(){/*...*/}
+      function isSafe(row,col,num){/*...*/}
+      function fillRemaining(row,col){/*...*/}
+      function shuffle(array){/*...*/}
+      // (Код генерации оставлен без изменений для краткости, он идентичен предыдущему)
+      function fillDiagonal(){for(let o=0;o<9;o+=3){const t=[1,2,3,4,5,6,7,8,9];shuffle(t);let l=0;for(let r=0;r<3;r++)for(let e=0;e<3;e++)solution[o+r][o+e]=t[l++]}}function isSafe(o,t,l){for(let r=0;r<9;r++)if(solution[o][r]===l||solution[r][t]===l)return!1;const r=o-o%3,e=t-t%3;for(let o=0;o<3;o++)for(let t=0;t<3;t++)if(solution[r+o][e+t]===l)return!1;return!0}function fillRemaining(o,t){if(t>=9&&(o++,t=0),o>=9)return!0;if(0!==solution[o][t])return fillRemaining(o,t+1);const l=[1,2,3,4,5,6,7,8,9];shuffle(l);for(let r of l)if(isSafe(o,t,r)){if(solution[o][t]=r,fillRemaining(o,t+1))return!0;solution[o][t]=0}return!1}function shuffle(o){for(let t=o.length-1;t>0;t--){const l=Math.floor(Math.random()*(t+1));[o[t],o[l]]=[o[l],o[t]]}}
     }
 
     function renderGrid() {
@@ -346,11 +282,14 @@
         const col = index % 9;
         input.value = grid[row][col] || '';
         input.disabled = givenCells.has(`${row},${col}`);
-        input.classList.remove('error', 'changed', 'highlight');
+        // --- ИСПРАВЛЕНИЕ: Очищаем все возможные классы при рендеринге ---
+        input.classList.remove('error', 'highlight', 'user-input', 'given');
+
         if (givenCells.has(`${row},${col}`)) {
           input.classList.add('given');
-        } else {
-          input.classList.remove('given');
+        } else if (input.value !== '') {
+            // Этот блок не должен срабатывать при начальном рендеринге, но для безопасности
+            input.classList.add('user-input');
         }
       });
       selectedNumber = null;
