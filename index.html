@@ -84,14 +84,22 @@
 </head>
 <body class="flex flex-col items-center justify-center min-h-screen p-2">
   <div class="bg-gray-900 rounded-2xl p-4 glow max-w-md w-full">
-    <h1 class="text-2xl font-bold text-purple-500 text-center mb-4">Судоку для Поли</h1>
+    <h1 class="text-2xl font-bold text-purple-500 text-center mb-4">Судоку</h1>
+    <!-- ИЗМЕНЕНИЕ: Добавлена кнопка очистки -->
     <div class="mb-4 flex justify-between items-center">
       <select id="difficulty" class="bg-gray-800 text-purple-500 rounded-lg p-2 glow text-sm">
         <option value="easy">Лёгкий</option>
         <option value="medium">Средний</option>
         <option value="hard">Сложный</option>
       </select>
-      <div id="timer" class="text-purple-500 font-semibold text-sm">00:00</div>
+      <div class="flex items-center gap-4">
+        <button id="clear-button" class="p-2 bg-gray-800 text-purple-400 rounded-lg glow hover:bg-gray-700 hover:text-purple-300 transition-colors" title="Очистить введённые ячейки">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0011.664 0l3.181-3.183m-4.991-2.695v-2.695A8.25 8.25 0 005.67 6.75v2.695m12.663 0V6.75a8.25 8.25 0 00-11.664 0v2.695" />
+          </svg>
+        </button>
+        <div id="timer" class="text-purple-500 font-semibold text-sm">00:00</div>
+      </div>
     </div>
     <div id="grid" class="grid-container mx-auto">
       <div class="h-sep"></div>
@@ -115,6 +123,7 @@
     const timerElement = document.getElementById('timer');
     const messageElement = document.getElementById('message');
     const numberRow = document.getElementById('number-row');
+    const clearButton = document.getElementById('clear-button'); // Новая кнопка
     let grid = [];
     let solution = [];
     let givenCells = new Set();
@@ -158,7 +167,6 @@
                 cellWrapper.classList.add('user-input');
                 if (highlightEnabled) highlightSimilarNumbers(selectedNumber);
               }
-              // --- ИЗМЕНЕНИЕ: Обновляем состояние кнопок после каждого хода ---
               updateNumberPanelState(); 
             } else { 
               if (cellContent.textContent) {
@@ -179,7 +187,6 @@
       for (let i = 1; i <= 9; i++) {
         const button = document.createElement('button');
         button.textContent = i;
-        // --- ИЗМЕНЕНИЕ: Добавлены стили для отключённого состояния ---
         button.className = 'number-button text-purple-500 bg-gray-800 rounded-md border border-gray-700 glow hover:bg-gray-700 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed';
         button.addEventListener('click', () => {
           if (selectedNumber === i) {
@@ -195,34 +202,36 @@
       }
     }
     
-    // --- НОВАЯ ФУНКЦИЯ: Обновляет состояние кнопок (1-9) ---
     function updateNumberPanelState() {
       const counts = {};
       for(let i = 1; i <= 9; i++) counts[i] = 0;
-      
-      for(let row of grid) {
-        for(let cell of row) {
-          if(cell !== 0) {
-            counts[cell]++;
-          }
-        }
-      }
-
+      for(let row of grid) for(let cell of row) if(cell !== 0) counts[cell]++;
       const buttons = numberRow.querySelectorAll('button');
       buttons.forEach(btn => {
         const num = parseInt(btn.textContent);
-        if (counts[num] === 9) {
-          btn.disabled = true;
-          // Если выбранное число только что стало недоступным, сбрасываем выбор
-          if (selectedNumber === num) {
-            selectedNumber = null;
-            clearHighlights();
-            updateNumberSelection();
-          }
-        } else {
-          btn.disabled = false;
+        btn.disabled = counts[num] === 9;
+        if (btn.disabled && selectedNumber === num) {
+          selectedNumber = null;
+          clearHighlights();
+          updateNumberSelection();
         }
       });
+    }
+
+    // --- НОВАЯ ФУНКЦИЯ: Очистка ячеек, введённых пользователем ---
+    function clearUserCells() {
+      document.querySelectorAll('.cell').forEach((cell, index) => {
+        const row = Math.floor(index / 9);
+        const col = index % 9;
+        if (!givenCells.has(`${row},${col}`)) {
+          grid[row][col] = 0;
+          cell.querySelector('.cell-content').textContent = '';
+          cell.classList.remove('user-input', 'error');
+        }
+      });
+      if (selectedNumber) clearHighlights();
+      messageElement.textContent = '';
+      updateNumberPanelState();
     }
 
     function updateNumberSelection() {
@@ -235,9 +244,7 @@
       document.querySelectorAll('.cell').forEach((cell, index) => {
         const row = Math.floor(index / 9);
         const col = index % 9;
-        if (grid[row][col] === num) {
-          cell.classList.add('highlight');
-        }
+        if (grid[row][col] === num) cell.classList.add('highlight');
       });
     }
 
@@ -246,24 +253,7 @@
     }
 
     function generatePuzzle(difficulty) {
-      solution = Array(9).fill().map(()=>Array(9).fill(0));
-      fillDiagonal();
-      fillRemaining(0, 0);
-      grid = solution.map(row => row.slice());
-      const cells = [];
-      for(let i=0; i<9; i++) for(let j=0; j<9; j++) cells.push([i,j]);
-      shuffle(cells);
-      const removeCount = {easy:45, medium:52, hard:58}[difficulty];
-      for(let i=0; i<removeCount; i++) {
-        const [row, col] = cells[i];
-        grid[row][col] = 0;
-      }
-      givenCells.clear();
-      for(let i=0; i<9; i++) for(let j=0; j<9; j++) {
-        if(grid[i][j] !== 0) givenCells.add(`${i},${j}`);
-      }
-      renderGrid();
-      function fillDiagonal(){for(let o=0;o<9;o+=3){const t=[1,2,3,4,5,6,7,8,9];shuffle(t);let l=0;for(let r=0;r<3;r++)for(let e=0;e<3;e++)solution[o+r][o+e]=t[l++]}}function isSafe(o,t,l){for(let r=0;r<9;r++)if(solution[o][r]===l||solution[r][t]===l)return!1;const r=o-o%3,e=t-t%3;for(let o=0;o<3;o++)for(let t=0;t<3;t++)if(solution[r+o][e+t]===l)return!1;return!0}function fillRemaining(o,t){if(t>=9&&(o++,t=0),o>=9)return!0;if(0!==solution[o][t])return fillRemaining(o,t+1);const l=[1,2,3,4,5,6,7,8,9];shuffle(l);for(let r of l)if(isSafe(o,t,r)){if(solution[o][t]=r,fillRemaining(o,t+1))return!0;solution[o][t]=0}return!1}function shuffle(o){for(let t=o.length-1;t>0;t--){const l=Math.floor(Math.random()*(t+1));[o[t],o[l]]=[o[l],o[t]]}}
+      solution = Array(9).fill().map(()=>Array(9).fill(0));fillDiagonal();fillRemaining(0, 0);grid = solution.map(row => row.slice());const cells = [];for(let i=0; i<9; i++) for(let j=0; j<9; j++) cells.push([i,j]);shuffle(cells);const removeCount = {easy:45, medium:52, hard:58}[difficulty];for(let i=0; i<removeCount; i++) {const [row, col] = cells[i];grid[row][col] = 0;}givenCells.clear();for(let i=0; i<9; i++) for(let j=0; j<9; j++) if(grid[i][j] !== 0) givenCells.add(`${i},${j}`);renderGrid();function fillDiagonal(){for(let o=0;o<9;o+=3){const t=[1,2,3,4,5,6,7,8,9];shuffle(t);let l=0;for(let r=0;r<3;r++)for(let e=0;e<3;e++)solution[o+r][o+e]=t[l++]}}function isSafe(o,t,l){for(let r=0;r<9;r++)if(solution[o][r]===l||solution[r][t]===l)return!1;const r=o-o%3,e=t-t%3;for(let o=0;o<3;o++)for(let t=0;t<3;t++)if(solution[r+o][e+t]===l)return!1;return!0}function fillRemaining(o,t){if(t>=9&&(o++,t=0),o>=9)return!0;if(0!==solution[o][t])return fillRemaining(o,t+1);const l=[1,2,3,4,5,6,7,8,9];shuffle(l);for(let r of l)if(isSafe(o,t,r)){if(solution[o][t]=r,fillRemaining(o,t+1))return!0;solution[o][t]=0}return!1}function shuffle(o){for(let t=o.length-1;t>0;t--){const l=Math.floor(Math.random()*(t+1));[o[t],o[l]]=[o[l],o[t]]}}
     }
     
     function renderGrid() {
@@ -274,17 +264,13 @@
         const cellContent = cell.querySelector('.cell-content');
         cellContent.textContent = grid[row][col] || '';
         cell.classList.remove('error', 'highlight', 'user-input', 'given');
-        if (givenCells.has(`${row},${col}`)) {
-          cell.classList.add('given');
-        } else if (grid[row][col] !== 0) {
-          cell.classList.add('user-input');
-        }
+        if (givenCells.has(`${row},${col}`)) cell.classList.add('given');
+        else if (grid[row][col] !== 0) cell.classList.add('user-input');
       });
       selectedNumber = null;
       updateNumberSelection();
       clearHighlights();
       resetTimer();
-      // --- ИЗМЕНЕНИЕ: Обновляем кнопки при старте игры ---
       updateNumberPanelState();
     }
 
@@ -317,16 +303,12 @@
           if (grid[row][col] !== solution[row][col]) {
             cell.classList.add('error');
             correct = false;
-          } else {
-            cell.classList.remove('error');
-          }
+          } else cell.classList.remove('error');
         }
       });
-      
       if (correct) {
         clearInterval(timerInterval);
         messageElement.textContent = 'Поздравляем! Вы решили пазл!';
-        // --- ИЗМЕНЕНИЕ: Отключаем все кнопки после победы ---
         numberRow.querySelectorAll('button').forEach(b => b.disabled = true);
       } else {
         messageElement.textContent = 'В решении есть ошибки.';
@@ -348,6 +330,8 @@
       else if (selectedNumber) highlightSimilarNumbers(selectedNumber);
     });
 
+    // --- ИЗМЕНЕНИЕ: Добавлен слушатель для кнопки очистки ---
+    clearButton.addEventListener('click', clearUserCells);
     newGameButton.addEventListener('click', startNewGame);
     checkButton.addEventListener('click', checkSolution);
     difficultySelect.addEventListener('change', startNewGame);
