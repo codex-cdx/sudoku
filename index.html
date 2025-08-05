@@ -12,31 +12,29 @@
     .glow {
       box-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
     }
-    
-    /* --- НОВЫЙ МЕГА-МИНИМАЛИСТИЧНЫЙ ДИЗАЙН ЯЧЕЕК --- */
     .grid-container {
       display: grid;
       grid-template-columns: repeat(9, minmax(0, 1fr));
-      gap: 2px; /* Зазор формирует сетку */
-      background-color: #374151; /* Цвет линий сетки (gray-700) */
+      gap: 2px;
+      background-color: #374151;
       position: relative;
       width: 100%;
       max-width: 360px;
-      padding: 3px; /* Внешний отступ для красоты */
-      border-radius: 12px; /* Скругляем углы всего поля */
+      padding: 3px;
+      border-radius: 12px;
     }
     .cell {
       transition: all 0.2s ease-in-out;
-      width: 100%; /* Ячейка заполняет контейнер */
+      width: 100%;
       height: 0;
-      padding-bottom: 100%; /* Создаем идеальный квадрат */
+      padding-bottom: 100%;
       position: relative;
-      background-color: #111827; /* Фон ячейки (gray-900) */
-      border: none; /* Убираем рамки */
-      border-radius: 6px; /* Скругляем углы ячейки */
+      background-color: #111827;
+      border: none;
+      border-radius: 6px;
       font-size: 1.4rem;
       font-weight: 500;
-      caret-color: transparent; /* Скрываем курсор ввода */
+      caret-color: transparent;
     }
     .cell-content {
       position: absolute;
@@ -50,25 +48,22 @@
     }
     .cell:focus {
       outline: none;
-      box-shadow: 0 0 15px rgba(168, 85, 247, 0.7); /* Фиолетовое свечение при фокусе */
+      box-shadow: 0 0 15px rgba(168, 85, 247, 0.7);
     }
-    /* Стили для разных состояний цифр */
     .error .cell-content {
-      color: #ef4444; /* Цифра становится красной (red-500) */
-      font-weight: 700; /* И жирной */
+      color: #ef4444;
+      font-weight: 700;
     }
     .given .cell-content {
       color: white;
-      font-weight: 700; /* Изначальные цифры - жирные */
+      font-weight: 700;
     }
     .user-input .cell-content {
-      color: #22d3ee; /* Пользовательские цифры - голубые (cyan-400) */
+      color: #22d3ee;
     }
     .highlight {
-      box-shadow: 0 0 15px rgba(132, 204, 22, 0.9); /* Лаймовое свечение */
+      box-shadow: 0 0 15px rgba(132, 204, 22, 0.9);
     }
-    
-    /* Границы подрешеток */
     .grid-container::before, .grid-container::after { content: ''; position: absolute; background-color: #a855f7; z-index: 1; }
     .grid-container::before { left: 33.333%; right: 33.333%; top: 3px; bottom: 3px; width: 2px; transform: translateX(-1px); }
     .grid-container::after { top: 33.333%; bottom: 33.333%; left: 3px; right: 3px; height: 2px; transform: translateY(-1px); }
@@ -98,12 +93,10 @@
       </select>
       <div id="timer" class="text-purple-500 font-semibold text-sm">00:00</div>
     </div>
-    
     <div id="grid" class="grid-container mx-auto">
       <div class="h-sep"></div>
       <div class="v-sep"></div>
     </div>
-    
     <div id="number-row" class="grid grid-cols-9 gap-1 mt-4 mx-auto" style="max-width: 360px;"></div>
     <div class="mt-4 flex justify-between gap-2">
       <button id="newGame" class="bg-purple-500 text-white px-3 py-2 rounded-lg glow hover:bg-purple-600 text-sm flex-grow sm:flex-grow-0">Новая игра</button>
@@ -131,20 +124,16 @@
     let highlightEnabled = true;
 
     function createGrid() {
-      // Очищаем предыдущие ячейки, но сохраняем разделители
       gridElement.innerHTML = '<div class="h-sep"></div><div class="v-sep"></div>';
       grid = Array(9).fill().map(() => Array(9).fill(0));
       givenCells.clear();
       
       for (let i = 0; i < 9; i++) {
         for (let j = 0; j < 9; j++) {
-          // --- ИЗМЕНЕНА СТРУКТУРА ЯЧЕЙКИ для нового дизайна ---
           const cellWrapper = document.createElement('div');
-          cellWrapper.className = 'cell'; // Внешний контейнер для стилизации
-          
+          cellWrapper.className = 'cell';
           const cellContent = document.createElement('div');
-          cellContent.className = 'cell-content'; // Внутренний для центрирования числа
-
+          cellContent.className = 'cell-content';
           cellWrapper.appendChild(cellContent);
 
           cellWrapper.addEventListener('click', () => {
@@ -169,6 +158,8 @@
                 cellWrapper.classList.add('user-input');
                 if (highlightEnabled) highlightSimilarNumbers(selectedNumber);
               }
+              // --- ИЗМЕНЕНИЕ: Обновляем состояние кнопок после каждого хода ---
+              updateNumberPanelState(); 
             } else { 
               if (cellContent.textContent) {
                 selectedNumber = parseInt(cellContent.textContent);
@@ -188,7 +179,8 @@
       for (let i = 1; i <= 9; i++) {
         const button = document.createElement('button');
         button.textContent = i;
-        button.className = 'number-button text-purple-500 bg-gray-800 rounded-md border border-gray-700 glow hover:bg-gray-700';
+        // --- ИЗМЕНЕНИЕ: Добавлены стили для отключённого состояния ---
+        button.className = 'number-button text-purple-500 bg-gray-800 rounded-md border border-gray-700 glow hover:bg-gray-700 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed';
         button.addEventListener('click', () => {
           if (selectedNumber === i) {
             selectedNumber = null;
@@ -201,6 +193,36 @@
         });
         numberRow.appendChild(button);
       }
+    }
+    
+    // --- НОВАЯ ФУНКЦИЯ: Обновляет состояние кнопок (1-9) ---
+    function updateNumberPanelState() {
+      const counts = {};
+      for(let i = 1; i <= 9; i++) counts[i] = 0;
+      
+      for(let row of grid) {
+        for(let cell of row) {
+          if(cell !== 0) {
+            counts[cell]++;
+          }
+        }
+      }
+
+      const buttons = numberRow.querySelectorAll('button');
+      buttons.forEach(btn => {
+        const num = parseInt(btn.textContent);
+        if (counts[num] === 9) {
+          btn.disabled = true;
+          // Если выбранное число только что стало недоступным, сбрасываем выбор
+          if (selectedNumber === num) {
+            selectedNumber = null;
+            clearHighlights();
+            updateNumberSelection();
+          }
+        } else {
+          btn.disabled = false;
+        }
+      });
     }
 
     function updateNumberSelection() {
@@ -251,9 +273,7 @@
         const col = index % 9;
         const cellContent = cell.querySelector('.cell-content');
         cellContent.textContent = grid[row][col] || '';
-        
         cell.classList.remove('error', 'highlight', 'user-input', 'given');
-
         if (givenCells.has(`${row},${col}`)) {
           cell.classList.add('given');
         } else if (grid[row][col] !== 0) {
@@ -264,6 +284,8 @@
       updateNumberSelection();
       clearHighlights();
       resetTimer();
+      // --- ИЗМЕНЕНИЕ: Обновляем кнопки при старте игры ---
+      updateNumberPanelState();
     }
 
     function resetTimer() {
@@ -304,6 +326,8 @@
       if (correct) {
         clearInterval(timerInterval);
         messageElement.textContent = 'Поздравляем! Вы решили пазл!';
+        // --- ИЗМЕНЕНИЕ: Отключаем все кнопки после победы ---
+        numberRow.querySelectorAll('button').forEach(b => b.disabled = true);
       } else {
         messageElement.textContent = 'В решении есть ошибки.';
       }
