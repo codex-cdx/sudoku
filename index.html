@@ -22,15 +22,14 @@
       box-shadow: 0 0 15px rgba(168, 85, 247, 0.7);
     }
     .error {
-      background-color: rgba(244, 63, 94, 0.3); /* розовая/красная подсветка ошибок */
+      background-color: rgba(244, 63, 94, 0.3);
     }
     .given {
       background-color: #4b5563; /* Tailwind gray-600 */
-      color: white; /* Изначальные цифры - белые */
+      color: white;
     }
-    /* --- ИСПРАВЛЕНИЕ: Новый стиль для цифр, введённых пользователем --- */
     .user-input {
-      color: #22d3ee; /* Яркий голубой (циан) цвет */
+      color: #22d3ee; /* Tailwind cyan-400 */
     }
     .highlight {
       box-shadow: 0 0 15px rgba(132, 204, 22, 0.9); /* Tailwind lime-500 */
@@ -39,7 +38,7 @@
       display: grid;
       grid-template-columns: repeat(9, minmax(0, 1fr));
       gap: 1px;
-      background-color: #1f2937; /* Tailwind gray-800 */
+      background-color: #374151; /* Tailwind gray-700 for grid lines */
       position: relative;
       width: 100%;
       max-width: 360px;
@@ -47,7 +46,6 @@
     .cell-container {
       position: relative;
     }
-    /* Вертикальные границы подрешёток 3x3 */
     .cell-container:nth-child(3n):not(:nth-child(9n))::after {
       content: '';
       position: absolute;
@@ -55,9 +53,8 @@
       top: 0;
       height: 100%;
       width: 3px;
-      background-color: #a855f7; /* Tailwind purple-500 */
+      background-color: #a855f7;
     }
-    /* Горизонтальные границы подрешёток 3x3 */
     .cell-container:nth-child(n+19):nth-child(-n+27)::before,
     .cell-container:nth-child(n+46):nth-child(-n+54)::before {
       content: '';
@@ -68,7 +65,6 @@
       height: 3px;
       background-color: #a855f7;
     }
-    /* Внешняя граница всего поля */
     .grid-container::before {
       content: '';
       position: absolute;
@@ -100,8 +96,9 @@
     }
   </style>
 </head>
-<body class="bg-gray-900 flex flex-col items-center justify-center min-h-screen p-2">
-  <div class="bg-black rounded-2xl p-4 glow max-w-md w-full">
+<body class="bg-gray-950 flex flex-col items-center justify-center min-h-screen p-2">
+  <!-- ИЗМЕНЕНИЕ: bg-black заменён на bg-gray-900 -->
+  <div class="bg-gray-900 rounded-2xl p-4 glow max-w-md w-full">
     <h1 class="text-2xl font-bold text-purple-500 text-center mb-4">Судоку</h1>
     <div class="mb-4 flex justify-between items-center">
       <select id="difficulty" class="bg-gray-800 text-purple-500 rounded-lg p-2 glow text-sm">
@@ -113,10 +110,12 @@
     </div>
     <div id="grid" class="grid-container p-2 rounded-lg mx-auto"></div>
     <div id="number-row" class="grid grid-cols-9 gap-1 mt-4 mx-auto" style="max-width: 360px;"></div>
-    <div class="mt-4 flex justify-between">
-      <button id="newGame" class="bg-purple-500 text-white px-4 py-2 rounded-lg glow hover:bg-purple-600 text-sm">Новая игра</button>
-      <button id="highlightToggle" class="bg-purple-500 text-white px-4 py-2 rounded-lg glow hover:bg-purple-600 text-sm">Подсветка: ВКЛ</button>
-      <button id="check" class="bg-purple-500 text-white px-4 py-2 rounded-lg glow hover:bg-purple-600 text-sm">Проверить</button>
+    <!-- ИЗМЕНЕНИЕ: Добавлен gap-2 для отступов между кнопками -->
+    <div class="mt-4 flex justify-between gap-2">
+      <!-- ИЗМЕНЕНИЕ: px-4 заменён на px-3 для уменьшения ширины кнопок -->
+      <button id="newGame" class="bg-purple-500 text-white px-3 py-2 rounded-lg glow hover:bg-purple-600 text-sm flex-grow sm:flex-grow-0">Новая игра</button>
+      <button id="highlightToggle" class="bg-purple-500 text-white px-3 py-2 rounded-lg glow hover:bg-purple-600 text-sm flex-grow sm:flex-grow-0">Подсветка: ВКЛ</button>
+      <button id="check" class="bg-purple-500 text-white px-3 py-2 rounded-lg glow hover:bg-purple-600 text-sm flex-grow sm:flex-grow-0">Проверить</button>
     </div>
     <p id="message" class="mt-4 text-center text-purple-500 text-sm h-5"></p>
   </div>
@@ -149,13 +148,12 @@
           const input = document.createElement('input');
           input.type = 'text';
           input.maxLength = 1;
-          // --- ИЗМЕНЕНИЕ: Убираем изначальный цвет текста, он будет задаваться классами ---
-          input.className = 'cell text-center bg-black rounded-md border border-gray-700 focus:border-purple-500';
+          // ИЗМЕНЕНИЕ: bg-black заменён на bg-gray-800
+          input.className = 'cell text-center bg-gray-800 rounded-md border-transparent focus:border-purple-500';
           input.readOnly = true;
 
           input.addEventListener('click', () => {
             const isGiven = givenCells.has(`${i},${j}`);
-            
             if (isGiven) {
               if (input.value) {
                 selectedNumber = parseInt(input.value);
@@ -164,18 +162,15 @@
               }
               return;
             }
-
             if (selectedNumber !== null) {
               if (grid[i][j] === selectedNumber) {
                 input.value = '';
                 grid[i][j] = 0;
-                // --- ИСПРАВЛЕНИЕ: Убираем класс при удалении цифры ---
                 input.classList.remove('user-input', 'error');
               } else {
                 input.value = selectedNumber;
                 grid[i][j] = selectedNumber;
                 input.classList.remove('error');
-                // --- ИСПРАВЛЕНИЕ: Добавляем класс для введённой цифры ---
                 input.classList.add('user-input');
                 if (highlightEnabled) highlightSimilarNumbers(selectedNumber);
               }
@@ -187,7 +182,6 @@
               }
             }
           });
-
           div.appendChild(input);
           gridElement.appendChild(div);
         }
@@ -253,7 +247,7 @@
         }
       }
       shuffle(cells);
-      const removeCount = { easy: 40, medium: 50, hard: 58 }[difficulty];
+      const removeCount = { easy: 40, medium: 52, hard: 58 }[difficulty];
       for(let i = 0; i < removeCount; i++) {
         const [row, col] = cells[i];
         grid[row][col] = 0;
@@ -267,11 +261,6 @@
         }
       }
       renderGrid();
-      function fillDiagonal(){/*...*/}
-      function isSafe(row,col,num){/*...*/}
-      function fillRemaining(row,col){/*...*/}
-      function shuffle(array){/*...*/}
-      // (Код генерации оставлен без изменений для краткости, он идентичен предыдущему)
       function fillDiagonal(){for(let o=0;o<9;o+=3){const t=[1,2,3,4,5,6,7,8,9];shuffle(t);let l=0;for(let r=0;r<3;r++)for(let e=0;e<3;e++)solution[o+r][o+e]=t[l++]}}function isSafe(o,t,l){for(let r=0;r<9;r++)if(solution[o][r]===l||solution[r][t]===l)return!1;const r=o-o%3,e=t-t%3;for(let o=0;o<3;o++)for(let t=0;t<3;t++)if(solution[r+o][e+t]===l)return!1;return!0}function fillRemaining(o,t){if(t>=9&&(o++,t=0),o>=9)return!0;if(0!==solution[o][t])return fillRemaining(o,t+1);const l=[1,2,3,4,5,6,7,8,9];shuffle(l);for(let r of l)if(isSafe(o,t,r)){if(solution[o][t]=r,fillRemaining(o,t+1))return!0;solution[o][t]=0}return!1}function shuffle(o){for(let t=o.length-1;t>0;t--){const l=Math.floor(Math.random()*(t+1));[o[t],o[l]]=[o[l],o[t]]}}
     }
 
@@ -282,13 +271,10 @@
         const col = index % 9;
         input.value = grid[row][col] || '';
         input.disabled = givenCells.has(`${row},${col}`);
-        // --- ИСПРАВЛЕНИЕ: Очищаем все возможные классы при рендеринге ---
         input.classList.remove('error', 'highlight', 'user-input', 'given');
-
         if (givenCells.has(`${row},${col}`)) {
           input.classList.add('given');
-        } else if (input.value !== '') {
-            // Этот блок не должен срабатывать при начальном рендеринге, но для безопасности
+        } else if (grid[row][col] !== 0) {
             input.classList.add('user-input');
         }
       });
