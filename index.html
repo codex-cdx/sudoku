@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=2.0, user-scalable=yes">
-  <title>Sudoku Game</title>
+  <title>Судоку</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     .glow {
@@ -11,9 +11,9 @@
     }
     .cell {
       transition: all 0.2s ease-in-out;
-      width: 9vw; /* Dynamic size based on viewport width */
+      width: 9vw;
       height: 9vw;
-      max-width: 40px; /* Cap for larger screens */
+      max-width: 40px;
       max-height: 40px;
       font-size: 1.2rem;
     }
@@ -22,7 +22,17 @@
       box-shadow: 0 0 15px rgba(168, 85, 247, 0.7);
     }
     .error {
-      background-color: rgba(168, 85, 247, 0.2);
+      background-color: rgba(244, 63, 94, 0.3); /* розовая/красная подсветка ошибок */
+    }
+    .given {
+      background-color: #4b5563; /* Tailwind gray-600 */
+      color: white;
+    }
+    .changed {
+      background-color: #86efac; /* Tailwind green-300 */
+    }
+    .highlight {
+      box-shadow: 0 0 15px rgba(132, 204, 22, 0.9); /* Tailwind lime-500 */
     }
     .grid-container {
       display: grid;
@@ -31,12 +41,12 @@
       background-color: #1f2937; /* Tailwind gray-800 */
       position: relative;
       width: 100%;
-      max-width: 360px; /* Optimized for mobile */
+      max-width: 360px;
     }
     .cell-container {
       position: relative;
     }
-    /* Vertical 3x3 subgrid borders */
+    /* Вертикальные границы подрешёток 3x3 */
     .cell-container:nth-child(3n):not(:nth-child(9n))::after {
       content: '';
       position: absolute;
@@ -46,7 +56,7 @@
       width: 3px;
       background-color: #a855f7; /* Tailwind purple-500 */
     }
-    /* Horizontal 3x3 subgrid borders */
+    /* Горизонтальные границы подрешёток 3x3 */
     .cell-container:nth-child(n+19):nth-child(-n+27)::before,
     .cell-container:nth-child(n+46):nth-child(-n+54)::before {
       content: '';
@@ -57,7 +67,7 @@
       height: 3px;
       background-color: #a855f7;
     }
-    /* Outer border for the entire grid */
+    /* Внешняя граница всего поля */
     .grid-container::before {
       content: '';
       position: absolute;
@@ -91,22 +101,23 @@
 </head>
 <body class="bg-gray-900 flex flex-col items-center justify-center min-h-screen p-2">
   <div class="bg-black rounded-2xl p-4 glow max-w-md w-full">
-    <h1 class="text-2xl font-bold text-purple-500 text-center mb-4">Sudoku</h1>
+    <h1 class="text-2xl font-bold text-purple-500 text-center mb-4">Судоку</h1>
     <div class="mb-4 flex justify-between items-center">
       <select id="difficulty" class="bg-gray-800 text-purple-500 rounded-lg p-2 glow text-sm">
-        <option value="easy">Easy</option>
-        <option value="medium">Medium</option>
-        <option value="hard">Hard</option>
+        <option value="easy">Лёгкий</option>
+        <option value="medium">Средний</option>
+        <option value="hard">Сложный</option>
       </select>
       <div id="timer" class="text-purple-500 font-semibold text-sm">00:00</div>
     </div>
     <div id="grid" class="grid-container p-2 rounded-lg mx-auto"></div>
     <div id="number-row" class="grid grid-cols-9 gap-1 mt-4 mx-auto" style="max-width: 360px;"></div>
     <div class="mt-4 flex justify-between">
-      <button id="newGame" class="bg-purple-500 text-white px-4 py-2 rounded-lg glow hover:bg-purple-600 text-sm">New Game</button>
-      <button id="check" class="bg-purple-500 text-white px-4 py-2 rounded-lg glow hover:bg-purple-600 text-sm">Check Solution</button>
+      <button id="newGame" class="bg-purple-500 text-white px-4 py-2 rounded-lg glow hover:bg-purple-600 text-sm">Новая игра</button>
+      <button id="highlightToggle" class="bg-purple-500 text-white px-4 py-2 rounded-lg glow hover:bg-purple-600 text-sm">Подсветка: ВКЛ</button>
+      <button id="check" class="bg-purple-500 text-white px-4 py-2 rounded-lg glow hover:bg-purple-600 text-sm">Проверить</button>
     </div>
-    <p id="message" class="mt-4 text-center text-purple-500 text-sm"></p>
+    <p id="message" class="mt-4 text-center text-purple-500 text-sm h-5"></p> <!-- Добавлена высота для стабильности макета -->
   </div>
 
   <script>
@@ -114,19 +125,23 @@
     const difficultySelect = document.getElementById('difficulty');
     const newGameButton = document.getElementById('newGame');
     const checkButton = document.getElementById('check');
+    const highlightToggleButton = document.getElementById('highlightToggle');
     const timerElement = document.getElementById('timer');
     const messageElement = document.getElementById('message');
     const numberRow = document.getElementById('number-row');
     let grid = [];
     let solution = [];
+    let givenCells = new Set();
     let timerInterval;
     let startTime;
     let selectedNumber = null;
+    let highlightEnabled = true;
 
-    // Generate a 9x9 grid with input cells
+    // --- ИСПРАВЛЕНИЕ 1: УЛУЧШЕННАЯ ЛОГИКА ВЗАИМОДЕЙСТВИЯ С ЯЧЕЙКАМИ ---
     function createGrid() {
       gridElement.innerHTML = '';
       grid = Array(9).fill().map(() => Array(9).fill(0));
+      givenCells.clear();
       for (let i = 0; i < 9; i++) {
         for (let j = 0; j < 9; j++) {
           const div = document.createElement('div');
@@ -135,26 +150,51 @@
           input.type = 'text';
           input.maxLength = 1;
           input.className = 'cell text-center text-purple-500 bg-black rounded-md border border-gray-700 focus:border-purple-500';
-          input.readOnly = true; // Make inputs read-only for click-based input
+          input.readOnly = true;
+
           input.addEventListener('click', () => {
-            if (!input.disabled && selectedNumber !== null) {
-              input.value = selectedNumber;
-              grid[i][j] = selectedNumber;
-              input.classList.remove('error');
-              messageElement.textContent = '';
-            } else if (!input.disabled && selectedNumber === null && input.value) {
-              input.value = '';
-              grid[i][j] = 0;
+            const isGiven = givenCells.has(`${i},${j}`);
+            
+            // Если ячейка "дана" (неизменяема)
+            if (isGiven) {
+              if (input.value) {
+                selectedNumber = parseInt(input.value);
+                updateNumberSelection();
+                if (highlightEnabled) highlightSimilarNumbers(selectedNumber);
+              }
+              return;
+            }
+
+            // Если выбран номер на панели
+            if (selectedNumber !== null) {
+              // Если в ячейке уже стоит этот номер, очищаем её (главное исправление)
+              if (grid[i][j] === selectedNumber) {
+                input.value = '';
+                grid[i][j] = 0;
+                input.classList.remove('changed', 'error');
+              } else { // Иначе, вставляем новый номер
+                input.value = selectedNumber;
+                grid[i][j] = selectedNumber;
+                input.classList.remove('error');
+                input.classList.add('changed');
+                if (highlightEnabled) highlightSimilarNumbers(selectedNumber);
+              }
+            } else { // Если номер на панели не выбран, но в ячейке есть число
+              if (input.value) {
+                selectedNumber = parseInt(input.value);
+                updateNumberSelection();
+                if (highlightEnabled) highlightSimilarNumbers(selectedNumber);
+              }
             }
           });
+
           div.appendChild(input);
           gridElement.appendChild(div);
         }
       }
       createNumberRow();
     }
-
-    // Create numeric row (1–9)
+    
     function createNumberRow() {
       numberRow.innerHTML = '';
       for (let i = 1; i <= 9; i++) {
@@ -162,59 +202,100 @@
         button.textContent = i;
         button.className = 'number-button text-purple-500 bg-gray-800 rounded-md border border-gray-700 glow hover:bg-gray-700';
         button.addEventListener('click', () => {
-          const buttons = numberRow.querySelectorAll('button');
-          buttons.forEach(btn => btn.classList.remove('selected'));
           if (selectedNumber === i) {
             selectedNumber = null;
+            clearHighlights();
           } else {
             selectedNumber = i;
-            button.classList.add('selected');
+            if (highlightEnabled) highlightSimilarNumbers(i);
           }
+          updateNumberSelection();
         });
         numberRow.appendChild(button);
       }
     }
 
-    // Generate a random Sudoku puzzle
+    function updateNumberSelection() {
+        const buttons = numberRow.querySelectorAll('button');
+        buttons.forEach(btn => {
+            if (parseInt(btn.textContent) === selectedNumber) {
+                btn.classList.add('selected');
+            } else {
+                btn.classList.remove('selected');
+            }
+        });
+    }
+
+    function highlightSimilarNumbers(num) {
+      clearHighlights();
+      const inputs = gridElement.querySelectorAll('input');
+      inputs.forEach((input) => {
+        if (parseInt(input.value) === num) {
+          input.classList.add('highlight');
+        }
+      });
+    }
+
+    function clearHighlights() {
+      const inputs = gridElement.querySelectorAll('input');
+      inputs.forEach(input => input.classList.remove('highlight'));
+    }
+
+    // --- ИСПРАВЛЕНИЕ 2: НАДЁЖНЫЙ АЛГОРИТМ ГЕНЕРАЦИИ ПАЗЛА ---
     function generatePuzzle(difficulty) {
-      // Initialize empty grid
       solution = Array(9).fill().map(() => Array(9).fill(0));
       
-      // Fill diagonal 3x3 boxes (independent, so always solvable)
-      for (let box = 0; box < 9; box += 3) {
-        fillBox(box, box);
+      // Генерация полного решения Судоку
+      fillDiagonal();
+      fillRemaining(0, 0); 
+      
+      // Копирование решения в рабочую сетку
+      grid = solution.map(row => row.slice());
+      
+      // Удаление ячеек в зависимости от сложности
+      const cells = [];
+      for (let i = 0; i < 9; i++) {
+        for (let j = 0; j < 9; j++) {
+          cells.push([i, j]);
+        }
+      }
+      shuffle(cells);
+
+      const removeCount = { easy: 40, medium: 50, hard: 58 }[difficulty];
+      for(let i = 0; i < removeCount; i++) {
+        const [row, col] = cells[i];
+        grid[row][col] = 0;
       }
       
-      // Fill remaining cells recursively
-      fillRemaining(0, 3);
-      
-      // Copy to grid and remove cells based on difficulty
-      grid = solution.map(row => row.slice());
-      const removeCount = { easy: 40, medium: 50, hard: 60 }[difficulty];
-      removeCells(removeCount);
-      
-      renderGrid();
-      
-      function fillBox(row, col) {
-        const nums = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-        for (let i = 0; i < 3; i++) {
-          for (let j = 0; j < 3; j++) {
-            const index = Math.floor(Math.random() * nums.length);
-            solution[row + i][col + j] = nums.splice(index, 1)[0];
+      // Обновление набора "данных" ячеек
+      givenCells.clear();
+      for (let i = 0; i < 9; i++) {
+        for (let j = 0; j < 9; j++) {
+          if (grid[i][j] !== 0) {
+            givenCells.add(`${i},${j}`);
           }
         }
       }
-      
+
+      renderGrid();
+
+      function fillDiagonal() {
+        for (let box = 0; box < 9; box += 3) {
+          const nums = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+          shuffle(nums);
+          let k = 0;
+          for (let i = 0; i < 3; i++) {
+            for (let j = 0; j < 3; j++) {
+              solution[box + i][box + j] = nums[k++];
+            }
+          }
+        }
+      }
+
       function isSafe(row, col, num) {
-        // Check row
         for (let x = 0; x < 9; x++) {
-          if (solution[row][x] === num) return false;
+          if (solution[row][x] === num || solution[x][col] === num) return false;
         }
-        // Check column
-        for (let x = 0; x < 9; x++) {
-          if (solution[x][col] === num) return false;
-        }
-        // Check 3x3 box
         const startRow = row - (row % 3);
         const startCol = col - (col % 3);
         for (let i = 0; i < 3; i++) {
@@ -224,45 +305,30 @@
         }
         return true;
       }
-      
+
+      // Классический алгоритм обратного перебора (backtracking)
       function fillRemaining(row, col) {
-        if (col >= 9 && row < 8) {
+        if (col >= 9) {
           row++;
           col = 0;
         }
-        if (row >= 9 && col >= 9) return true;
-        if (row < 3) {
-          if (col < 3) col = 3;
-        } else if (row < 6) {
-          if (col === Math.floor(row / 3) * 3) col += 3;
-        } else {
-          if (col === 6) {
-            row++;
-            col = 0;
-            if (row >= 9) return true;
-          }
+        if (row >= 9) return true;
+        
+        if (solution[row][col] !== 0) {
+          return fillRemaining(row, col + 1);
         }
+
         const nums = [1, 2, 3, 4, 5, 6, 7, 8, 9];
         shuffle(nums);
+
         for (let num of nums) {
           if (isSafe(row, col, num)) {
             solution[row][col] = num;
             if (fillRemaining(row, col + 1)) return true;
-            solution[row][col] = 0;
+            solution[row][col] = 0; // Backtrack
           }
         }
         return false;
-      }
-      
-      function removeCells(count) {
-        while (count > 0) {
-          const row = Math.floor(Math.random() * 9);
-          const col = Math.floor(Math.random() * 9);
-          if (grid[row][col] !== 0) {
-            grid[row][col] = 0;
-            count--;
-          }
-        }
       }
       
       function shuffle(array) {
@@ -273,23 +339,26 @@
       }
     }
 
-    // Render the grid to the UI
     function renderGrid() {
       const inputs = gridElement.querySelectorAll('input');
       inputs.forEach((input, index) => {
         const row = Math.floor(index / 9);
         const col = index % 9;
         input.value = grid[row][col] || '';
-        input.disabled = grid[row][col] !== 0;
-        input.classList.remove('error');
+        input.disabled = givenCells.has(`${row},${col}`);
+        input.classList.remove('error', 'changed', 'highlight');
+        if (givenCells.has(`${row},${col}`)) {
+          input.classList.add('given');
+        } else {
+          input.classList.remove('given');
+        }
       });
       selectedNumber = null;
-      const buttons = numberRow.querySelectorAll('button');
-      buttons.forEach(btn => btn.classList.remove('selected'));
+      updateNumberSelection();
+      clearHighlights();
       resetTimer();
     }
 
-    // Start or reset the timer
     function resetTimer() {
       clearInterval(timerInterval);
       startTime = Date.now();
@@ -301,50 +370,63 @@
       }, 1000);
     }
 
-    // Check if the grid is fully filled
     function isGridFilled() {
-      return grid.every(row => row.every(cell => cell !== 0));
+      return grid.every(row => row.every(cell => cell !== 0 && cell >= 1 && cell <= 9));
     }
 
-    // Check the solution
     function checkSolution() {
       if (!isGridFilled()) {
-        messageElement.textContent = 'Please fill all cells before checking.';
+        messageElement.textContent = 'Заполните все ячейки перед проверкой.';
         return;
       }
       let correct = true;
       const inputs = gridElement.querySelectorAll('input');
-      for (let i = 0; i < 9; i++) {
-        for (let j = 0; j < 9; j++) {
-          const index = i * 9 + j;
-          if (grid[i][j] !== solution[i][j]) {
-            inputs[index].classList.add('error');
-            correct = false;
-          } else {
-            inputs[index].classList.remove('error');
-          }
+      inputs.forEach((input, index) => {
+        const row = Math.floor(index / 9);
+        const col = index % 9;
+        if (!givenCells.has(`${row},${col}`)) {
+            if (grid[row][col] !== solution[row][col]) {
+                input.classList.add('error');
+                correct = false;
+            } else {
+                input.classList.remove('error');
+            }
         }
+      });
+      
+      if (correct) {
+        clearInterval(timerInterval);
+        messageElement.textContent = 'Поздравляем! Вы решили пазл!';
+      } else {
+        messageElement.textContent = 'В решении есть ошибки. Попробуйте снова!';
       }
-      messageElement.textContent = correct ? 'Congratulations! You solved it!' : 'There are errors in your solution.';
     }
 
-    // Start a new game
     function startNewGame() {
       const difficulty = difficultySelect.value;
+      messageElement.textContent = '';
+      highlightToggleButton.textContent = 'Подсветка: ВКЛ';
+      highlightEnabled = true;
       createGrid();
       generatePuzzle(difficulty);
-      messageElement.textContent = '';
     }
 
-    // Event listeners
+    highlightToggleButton.addEventListener('click', () => {
+      highlightEnabled = !highlightEnabled;
+      highlightToggleButton.textContent = `Подсветка: ${highlightEnabled ? 'ВКЛ' : 'ВЫКЛ'}`;
+      if (!highlightEnabled) {
+        clearHighlights();
+      } else if (selectedNumber !== null) {
+        highlightSimilarNumbers(selectedNumber);
+      }
+    });
+
     newGameButton.addEventListener('click', startNewGame);
     checkButton.addEventListener('click', checkSolution);
     difficultySelect.addEventListener('change', startNewGame);
 
-    // Initialize the game
     startNewGame();
-
-    // Handle pinch-to-zoom
+    
     document.addEventListener('gesturestart', (e) => e.preventDefault());
     document.addEventListener('touchmove', (e) => {
       if (e.scale !== 1) {
