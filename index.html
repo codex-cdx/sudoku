@@ -14,7 +14,8 @@
     body[data-theme="black"] { --primary-color: #6b7280; --primary-hover: #4b5563; --text-accent: #d1d5db; --body-bg: #000000; --container-bg: #111827; --cell-bg: #1f2937; --grid-line: #4b5563; --given-text: #ffffff; --error-text: #ef4444; --highlight-bg: #9ca3af; --highlight-text: #000000; --area-highlight-bg: rgba(255, 255, 255, 0.05); --active-cell-bg: rgba(255, 255, 255, 0.1); --hint-bg: #ffffff; --hint-text: #111827; }
     body[data-theme="pink"] { --primary-color: #ec4899; --primary-hover: #db2777; --text-accent: #f472b6; --body-bg: #1a0810; --container-bg: #2a0f1c; --cell-bg: #3a1628; --grid-line: #6d284f; --given-text: #ffffff; --error-text: #fca5a5; --highlight-bg: var(--primary-color); --highlight-text: var(--given-text); --area-highlight-bg: rgba(236, 72, 153, 0.06); --active-cell-bg: rgba(236, 72, 153, 0.12); --hint-bg: #ffffff; --hint-text: #2a0f1c; }
     body[data-theme="turquoise"] { --primary-color: #14b8a6; --primary-hover: #0d9488; --text-accent: #2dd4bf; --body-bg: #040f0d; --container-bg: #0a1a17; --cell-bg: #112e29; --grid-line: #1f6259; --given-text: #ffffff; --error-text: #fca5a5; --highlight-bg: var(--primary-color); --highlight-text: #040f0d; --area-highlight-bg: rgba(20, 184, 166, 0.06); --active-cell-bg: rgba(20, 184, 166, 0.12); --hint-bg: #ffffff; --hint-text: #0a1a17; }
-    body[data-theme="purple"] .user-input .cell-content, body[data-theme="orange"] .user-input .cell-content, body[data-theme="green"] .user-input .cell-content, body[data-theme="black"] .user-input .cell-content, body[data-theme="pink"] .user-input .cell-content, body[data-theme="turquoise"] .user-input .cell-content { color: var(--primary-color); }
+    body[data-theme="purple"] .user-input .cell-content, body[data-theme="orange"] .user-input .cell-content, body[data-theme="green"] .user-input .cell-content, body[data-theme="pink"] .user-input .cell-content, body[data-theme="turquoise"] .user-input .cell-content { color: var(--primary-color); }
+    body[data-theme="black"] .user-input .cell-content { color: #d1d5db; } /* Светло-серый для ЧБ темы */
     body[data-theme="light"] .user-input .cell-content { color: #1e40af; }
 
     /* --- Общие стили --- */
@@ -56,10 +57,10 @@
 </head>
 <body class="flex flex-col items-center justify-center min-h-screen p-2 sm:p-4">
   <div id="game-container" class="rounded-2xl p-4 glow">
-    <h1 class="title-text text-2xl font-bold text-center mb-4">Судоку для Поли</h1>
+    <h1 class="title-text text-2xl font-bold text-center mb-4">Судоку</h1>
     <div class="mb-4 flex justify-between items-center">
       <select id="difficulty" class="select-box rounded-lg p-2 glow text-sm">
-        <option value="easy">Лёгкий</option> <option value="medium">Средний</option> <option value="hard">Ебанутый уровень</option>
+        <option value="easy">Лёгкий</option> <option value="medium">Средний</option> <option value="hard">Сложный</option>
       </select>
       <div class="flex items-center gap-2 sm:gap-4 relative">
         <button id="recent-games-button" class="control-button p-2 rounded-lg glow transition-colors" title="Недавние игры"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z" /></svg></button>
@@ -72,12 +73,7 @@
     <div id="number-row" class="grid grid-cols-10 gap-1 sm:gap-2 mt-4 mx-auto"></div>
     <div class="mt-4 flex flex-wrap justify-center gap-2">
       <button id="undo-button" class="main-button text-white px-3 py-2 rounded-lg glow text-sm disabled:opacity-50" disabled title="Отменить"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mx-auto"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" /></svg></button>
-      <button id="hint-button" class="main-button text-white px-3 py-2 rounded-lg glow text-sm disabled:opacity-50" disabled title="Подсказка">
-        <!-- ИСПРАВЛЕННАЯ ИКОНКА ЛАМПОЧКИ -->
-        <svg fill="currentColor" viewBox="0 0 32 32" version="1.1" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mx-auto">
-          <path d="M2.016 16q0 0.832 0.576 1.44t1.408 0.576 1.408-0.576 0.608-1.44-0.608-1.408-1.408-0.576-1.408 0.576-0.576 1.408zM5.504 24.512q0 0.8 0.576 1.408t1.44 0.576 1.408-0.576 0.576-1.408-0.576-1.408-1.408-0.608-1.44 0.608-0.576 1.408zM5.504 7.52q0 0.832 0.576 1.408t1.44 0.576 1.408-0.576 0.576-1.408-0.576-1.408-1.408-0.608-1.44 0.608-0.576 1.408zM8 16q0 3.328 2.336 5.664t5.664 2.336 5.664-2.336 2.336-5.664-2.336-5.632-5.664-2.368-5.664 2.368-2.336 5.632zM12 16q0-1.632 1.184-2.816t2.816-1.184 2.816 1.184 1.184 2.816-1.184 2.848-2.816 1.152-2.816-1.152-1.184-2.848zM14.016 28q0 0.832 0.576 1.44t1.408 0.576 1.408-0.576 0.608-1.44-0.608-1.408-1.408-0.576-1.408 0.576-0.576 1.408zM14.016 4q0 0.832 0.576 1.44t1.408 0.576 1.408-0.576 0.608-1.44-0.608-1.408-1.408-0.576-1.408 0.576-0.576 1.408zM22.496 24.512q0 0.8 0.576 1.408t1.408 0.576 1.44-0.576 0.576-1.408-0.576-1.408-1.44-0.608-1.408 0.608-0.576 1.408zM22.496 7.52q0 0.832 0.576 1.408t1.408 0.576 1.44-0.576 0.576-1.408-0.576-1.408-1.44-0.608-1.408 0.608-0.576 1.408zM26.016 16q0 0.832 0.576 1.44t1.408 0.576 1.408-0.576 0.608-1.44-0.608-1.408-1.408-0.576-1.408 0.576-0.576 1.408z"></path>
-        </svg>
-      </button>
+      <button id="hint-button" class="main-button text-white px-3 py-2 rounded-lg glow text-sm disabled:opacity-50" disabled title="Подсказка"><svg fill="currentColor" viewBox="0 0 32 32" version="1.1" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mx-auto"><path d="M2.016 16q0 0.832 0.576 1.44t1.408 0.576 1.408-0.576 0.608-1.44-0.608-1.408-1.408-0.576-1.408 0.576-0.576 1.408zM5.504 24.512q0 0.8 0.576 1.408t1.44 0.576 1.408-0.576 0.576-1.408-0.576-1.408-1.408-0.608-1.44 0.608-0.576 1.408zM5.504 7.52q0 0.832 0.576 1.408t1.44 0.576 1.408-0.576 0.576-1.408-0.576-1.408-1.408-0.608-1.44 0.608-0.576 1.408zM8 16q0 3.328 2.336 5.664t5.664 2.336 5.664-2.336 2.336-5.664-2.336-5.632-5.664-2.368-5.664 2.368-2.336 5.632zM12 16q0-1.632 1.184-2.816t2.816-1.184 2.816 1.184 1.184 2.816-1.184 2.848-2.816 1.152-2.816-1.152-1.184-2.848zM14.016 28q0 0.832 0.576 1.44t1.408 0.576 1.408-0.576 0.608-1.44-0.608-1.408-1.408-0.576-1.408 0.576-0.576 1.408zM14.016 4q0 0.832 0.576 1.44t1.408 0.576 1.408-0.576 0.608-1.44-0.608-1.408-1.408-0.576-1.408 0.576-0.576 1.408zM22.496 24.512q0 0.8 0.576 1.408t1.408 0.576 1.44-0.576 0.576-1.408-0.576-1.408-1.44-0.608-1.408 0.608-0.576 1.408zM22.496 7.52q0 0.832 0.576 1.408t1.408 0.576 1.44-0.576 0.576-1.408-0.576-1.408-1.44-0.608-1.408 0.608-0.576 1.408zM26.016 16q0 0.832 0.576 1.44t1.408 0.576 1.408-0.576 0.608-1.44-0.608-1.408-1.408-0.576-1.408 0.576-0.576 1.408z"></path></svg></button>
       <button id="newGame" class="main-button text-white px-3 py-2 rounded-lg glow text-sm">Новая игра</button>
       <button id="highlightToggle" class="main-button text-white px-3 py-2 rounded-lg glow text-sm">Подсветка</button>
       <button id="check" class="main-button text-white px-3 py-2 rounded-lg glow text-sm">Проверить</button>
