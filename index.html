@@ -53,14 +53,13 @@
     .modal-content { background-color: var(--container-bg); padding: 1.5rem; border-radius: 1rem; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto; }
     .modal-preview-grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 1px; width: 80px; height: 80px; background-color: var(--grid-line); flex-shrink: 0; }
     .modal-preview-cell { background-color: var(--cell-bg); font-size: 0.5rem; display: flex; align-items: center; justify-content: center; }
-    /* Стили для обучения */
     .tutorial-grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 1px; background-color: var(--grid-line); border: 2px solid var(--primary-color); margin: 0.5rem auto; width: 180px; height: 180px; }
     .tutorial-cell { background-color: var(--cell-bg); color: var(--given-text); font-size: 0.8rem; display: flex; align-items: center; justify-content: center; position: relative; transition: all 0.3s; }
-    .tut-scan-line { background-color: color-mix(in srgb, var(--primary-color) 40%, transparent); }
+    .tut-highlight { background-color: var(--area-highlight-bg); }
     .tut-conflict { color: var(--error-text); }
     .tut-target { background-color: var(--active-cell-bg); }
     @keyframes pop { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-    .tut-placed { animation: pop 0.3s ease-out; }
+    .tut-placed { animation: pop 0.3s ease-out; color: var(--primary-color); font-weight: 700; }
   </style>
 </head>
 <body class="flex flex-col items-center justify-center min-h-screen p-2 sm:p-4">
@@ -95,27 +94,30 @@
   <div id="tutorial-modal" class="modal-overlay hidden">
     <div class="modal-content">
       <div class="flex justify-between items-center mb-4">
-        <h2 class="text-xl font-bold title-text">Как играть: Техника "Сканирование"</h2>
+        <h2 class="text-xl font-bold title-text">Как играть: Пошаговый пример</h2>
         <button id="close-tutorial-button" class="text-2xl">&times;</button>
       </div>
       <div class="space-y-4 text-sm">
-        <p>Цель — найти место для недостающей цифры (например, "5") в центральном блоке.</p>
         <div id="tutorial-grid" class="tutorial-grid"></div>
-        <p id="tutorial-text" class="text-center h-5 transition-opacity"></p>
-        <button id="replay-tutorial" class="main-button w-full py-2 rounded-lg glow">Повторить анимацию</button>
+        <p id="tutorial-text" class="text-center h-10 transition-opacity"></p>
+        <div class="flex justify-between items-center">
+            <button id="tutorial-prev" class="main-button py-2 px-4 rounded-lg glow disabled:opacity-50" disabled>Назад</button>
+            <span id="tutorial-step-indicator" class="text-xs opacity-70"></span>
+            <button id="tutorial-next" class="main-button py-2 px-4 rounded-lg glow">Далее</button>
+        </div>
       </div>
     </div>
   </div>
 
   <script>
-    const elements = { body: document.body, gameContainer: document.getElementById('game-container'), grid: document.getElementById('grid'), difficulty: document.getElementById('difficulty'), newGameBtn: document.getElementById('newGame'), checkBtn: document.getElementById('check'), highlightBtn: document.getElementById('highlightToggle'), timer: document.getElementById('timer'), message: document.getElementById('message'), numberRow: document.getElementById('number-row'), undoBtn: document.getElementById('undo-button'), hintBtn: document.getElementById('hint-button'), recentGamesBtn: document.getElementById('recent-games-button'), recentGamesModal: document.getElementById('recent-games-modal'), closeModalBtn: document.getElementById('close-modal-button'), recentGamesList: document.getElementById('recent-games-list'), settingsBtn: document.getElementById('settings-button'), themePanel: document.getElementById('theme-panel'), tutorialBtn: document.getElementById('tutorial-button'), tutorialModal: document.getElementById('tutorial-modal'), closeTutorialBtn: document.getElementById('close-tutorial-button'), tutorialGrid: document.getElementById('tutorial-grid'), tutorialText: document.getElementById('tutorial-text'), replayTutorialBtn: document.getElementById('replay-tutorial') };
-    let grid = [], solution = [], givenCells = new Set(), timerInterval, startTime=0, activeCell = null, activeTool = null, highlightEnabled = true, undoStack = [];
+    const elements = { body: document.body, gameContainer: document.getElementById('game-container'), grid: document.getElementById('grid'), difficulty: document.getElementById('difficulty'), newGameBtn: document.getElementById('newGame'), checkBtn: document.getElementById('check'), highlightBtn: document.getElementById('highlightToggle'), timer: document.getElementById('timer'), message: document.getElementById('message'), numberRow: document.getElementById('number-row'), undoBtn: document.getElementById('undo-button'), hintBtn: document.getElementById('hint-button'), recentGamesBtn: document.getElementById('recent-games-button'), recentGamesModal: document.getElementById('recent-games-modal'), closeModalBtn: document.getElementById('close-modal-button'), recentGamesList: document.getElementById('recent-games-list'), settingsBtn: document.getElementById('settings-button'), themePanel: document.getElementById('theme-panel'), tutorialBtn: document.getElementById('tutorial-button'), tutorialModal: document.getElementById('tutorial-modal'), closeTutorialBtn: document.getElementById('close-tutorial-button'), tutorialGrid: document.getElementById('tutorial-grid'), tutorialText: document.getElementById('tutorial-text'), tutorialPrevBtn: document.getElementById('tutorial-prev'), tutorialNextBtn: document.getElementById('tutorial-next'), tutorialStepIndicator: document.getElementById('tutorial-step-indicator') };
+    let grid = [], solution = [], givenCells = new Set(), timerInterval, startTime=0, activeCell = null, activeTool = null, highlightEnabled = true, undoStack = [], tutorialStep = 0;
     
     function createGrid() { /* ... */ elements.grid.innerHTML='<div class="grid-separator v-sep-1"></div><div class="grid-separator v-sep-2"></div><div class="grid-separator h-sep-1"></div><div class="grid-separator h-sep-2"></div>';grid=Array(9).fill().map(()=>Array(9).fill(0));givenCells.clear();for(let i=0;i<9;i++)for(let j=0;j<9;j++){const e=document.createElement("div");e.className="cell";const t=document.createElement("div");t.className="cell-content";e.appendChild(t),e.addEventListener("click",(t)=>{t.stopPropagation();handleCellClick(i,j)}),elements.grid.appendChild(e)}}
     function createNumberRow() { /* ... */ elements.numberRow.innerHTML="";for(let i=1;i<=9;i++){const e=document.createElement("div");e.className="number-button-wrapper",e.dataset.tool=i,e.innerHTML=`<div class="number-button"><div class="number-button-content"><span>${i}</span></div></div>`,e.addEventListener("click",()=>{e.classList.contains("disabled")||selectTool(i)}),elements.numberRow.appendChild(e)}const e=document.createElement("div");e.className="number-button-wrapper",e.dataset.tool="erase",e.innerHTML=`<div class="number-button"><div class="number-button-content"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg></div></div>`,e.addEventListener("click",()=>selectTool("erase")),elements.numberRow.appendChild(e)}
     function generatePuzzle(difficulty) { let puzzle, sol; do { sol = createSolution(); puzzle = createPuzzle(sol, difficulty); } while (countSolutions(puzzle.map(r => r.slice())) !== 1); solution = sol; grid = puzzle; givenCells.clear(); for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) if (grid[r][c] !== 0) givenCells.add(`${r},${c}`); renderGrid(); }
     function createSolution() { let board = Array(9).fill().map(() => Array(9).fill(0)); fill(board); return board; }
-    function createPuzzle(solution, difficulty) { const puzzle = solution.map(row => row.slice()); let cellsToRemove = { easy: 48, medium: 55, hard: 61 }[difficulty]; const cells = []; for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) cells.push([r, c]); shuffle(cells); for (let i = 0; i < cells.length && cellsToRemove > 0; i++) { const [r, c] = cells[i]; const temp = puzzle[r][c]; puzzle[r][c] = 0; if (countSolutions(puzzle.map(row => row.slice())) !== 1) { puzzle[r][c] = temp; } else { cellsToRemove--; } } return puzzle; }
+    function createPuzzle(solution, difficulty) { const puzzle = solution.map(row => row.slice()); let cellsToRemove = { easy: 40, medium: 52, hard: 58 }[difficulty]; const cells = []; for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) cells.push([r, c]); shuffle(cells); for (let i = 0; i < cells.length && cellsToRemove > 0; i++) { const [r, c] = cells[i]; const temp = puzzle[r][c]; puzzle[r][c] = 0; if (countSolutions(puzzle.map(row => row.slice())) !== 1) { puzzle[r][c] = temp; } else { cellsToRemove--; } } return puzzle; }
     function countSolutions(board) { let counter = 0; function solve() { for (let r = 0; r < 9; r++) { for (let c = 0; c < 9; c++) { if (board[r][c] === 0) { for (let num = 1; num <= 9; num++) { if (isSafe(board, r, c, num)) { board[r][c] = num; solve(); if (counter > 1) return; board[r][c] = 0; } } return; } } } counter++; } solve(); return counter; }
     function fill(board) { for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) { if (board[r][c] === 0) { const nums = [1, 2, 3, 4, 5, 6, 7, 8, 9]; shuffle(nums); for (let num of nums) if (isSafe(board, r, c, num)) { board[r][c] = num; if (fill(board)) return true; board[r][c] = 0; } return false; } } return true; }
     function isSafe(board, row, col, num) { for (let x = 0; x < 9; x++) if (board[row][x] === num || board[x][col] === num || board[3 * Math.floor(row / 3) + Math.floor(x / 3)][3 * Math.floor(col / 3) + x % 3] === num) return false; return true; }
@@ -142,7 +144,37 @@
     function loadGame(gameState) { grid = gameState.grid; solution = gameState.solution; givenCells = new Set(gameState.givenCells); elements.difficulty.value = gameState.difficulty; renderGrid(false); resetTimer(gameState.time); elements.recentGamesModal.classList.add('hidden'); }
     function populateRecentGames() { const games = JSON.parse(localStorage.getItem('sudoku-recent-games')) || []; elements.recentGamesList.innerHTML = ''; if (games.length === 0) { elements.recentGamesList.innerHTML = '<p>Сохранённых игр нет.</p>'; return; } games.forEach(game => { const gameEl = document.createElement('div'); gameEl.className = 'flex items-center gap-4 p-2 rounded-lg border-b border-[var(--grid-line)]'; const time = new Date(game.savedAt); const previewGrid = game.grid.flat().map((cell, i) => `<div class="modal-preview-cell" style="color: ${game.givenCells.includes(`${Math.floor(i/9)},${i%9}`) ? 'var(--given-text)' : 'var(--primary-color)'}; font-weight: ${game.givenCells.includes(`${Math.floor(i/9)},${i%9}`) ? 700 : 500}">${cell || ''}</div>`).join(''); gameEl.innerHTML = ` <div class="modal-preview-grid">${previewGrid}</div> <div class="flex-grow"> <p class="font-bold">${time.toLocaleDateString()} ${time.toLocaleTimeString()}</p> <p class="text-sm opacity-70">${game.difficulty}</p> </div> <div class="flex flex-col gap-1"> <button class="load-game-button main-button text-white px-3 py-1 rounded-lg glow text-xs" data-id="${game.savedAt}">Загрузить</button> <button class="delete-game-button control-button text-red-500 hover:bg-red-500 hover:text-white px-3 py-1 rounded-lg glow text-xs" data-id="${game.savedAt}">Удалить</button> </div> `; elements.recentGamesList.appendChild(gameEl); }); }
     function deleteGame(gameId) { if (!confirm('Вы уверены, что хотите удалить эту игру?')) return; let recentGames = JSON.parse(localStorage.getItem('sudoku-recent-games')) || []; recentGames = recentGames.filter(game => game.savedAt !== gameId); localStorage.setItem('sudoku-recent-games', JSON.stringify(recentGames)); populateRecentGames(); }
-    function playTutorialAnimation() { const gridEl = elements.tutorialGrid; const textEl = elements.tutorialText; const cells = []; gridEl.innerHTML = ''; for (let i = 0; i < 81; i++) { const cell = document.createElement('div'); cell.className = 'tutorial-cell'; cells.push(cell); gridEl.appendChild(cell); } const puzzle = [ [0,0,0,0,0,0,0,1,2], [0,0,0,0,3,5,0,0,0], [0,0,0,6,0,0,0,7,0], [7,0,0,0,0,0,3,0,0], [0,5,0,0,0,0,0,0,0], [0,0,0,0,0,0,0,0,0], [0,0,0,0,0,1,0,0,0], [0,2,0,0,0,0,5,0,0], [8,0,0,0,0,0,0,0,0] ]; const conflicts = [13, 15, 30, 39]; const target = 40; const scanLinesH = [36,37,38,42,43,44]; const scanLinesV = [4,13,22,31,49,58,67,76]; puzzle.flat().forEach((val, i) => cells[i].textContent = val || ''); const timeouts = []; const clearTimeouts = () => timeouts.forEach(clearTimeout); clearTimeouts(); const run = (fn, delay) => timeouts.push(setTimeout(fn, delay)); run(() => { textEl.textContent = 'Ищем место для "5" в центре'; cells[target].classList.add('tut-target'); }, 500); run(() => { textEl.textContent = 'Эти "5" уже есть в строке и столбце'; conflicts.forEach(i => cells[i].classList.add('tut-conflict')); }, 1500); run(() => { textEl.textContent = 'Значит, они "закрывают" эти линии...'; scanLinesH.forEach(i => cells[i].classList.add('tut-scan-line')); scanLinesV.forEach(i => cells[i].classList.add('tut-scan-line')); }, 2500); run(() => { textEl.textContent = 'Остаётся только одно свободное место!'; cells[target].textContent = '5'; cells[target].classList.add('tut-placed'); }, 4000); }
+    
+    // --- Логика обучения ---
+    const tutorialSteps = [
+        { text: "Задача: найти, какая цифра должна быть в этой ячейке.", action: (cells) => { cells[40].classList.add('tut-target'); } },
+        { text: "Проверяем строку. Здесь уже есть '5', значит в этих ячейках её быть не может.", action: (cells) => { for(let i=36; i<45; i++) cells[i].classList.add('tut-highlight'); cells[41].classList.add('tut-conflict'); } },
+        { text: "Проверяем столбец. Здесь тоже есть '5'.", action: (cells) => { for(let i=4; i<81; i+=9) cells[i].classList.add('tut-highlight'); cells[13].classList.add('tut-conflict'); } },
+        { text: "Проверяем блок 3х3. И тут есть '5'.", action: (cells) => { for(let r=3; r<6; r++) for(let c=3; c<6; c++) cells[r*9+c].classList.add('tut-highlight'); cells[30].classList.add('tut-conflict'); } },
+        { text: "Исключив все занятые линии, мы видим единственное возможное место.", action: (cells) => { [36,37,38,41,42,43,44].forEach(i=>cells[i].classList.add('tut-highlight')); [4,13,22,31,49,58,67,76].forEach(i=>cells[i].classList.add('tut-highlight')); [30].forEach(i=>cells[i].classList.add('tut-highlight')); [41,13,30].forEach(i=>cells[i].classList.add('tut-conflict')); } },
+        { text: "Готово! Смело ставим сюда '5'.", action: (cells) => { cells[40].textContent = '5'; cells[40].classList.add('tut-placed'); } },
+    ];
+    function playTutorial(step = 0) {
+        tutorialStep = step;
+        const gridEl = elements.tutorialGrid;
+        const textEl = elements.tutorialText;
+        const cells = [];
+        gridEl.innerHTML = '';
+        for (let i = 0; i < 81; i++) { const cell = document.createElement('div'); cell.className = 'tutorial-cell'; cells.push(cell); gridEl.appendChild(cell); }
+        const puzzle = [null,null,null,null,5,null,null,null,null, null,null,null,null,null,null,null,null,null, null,null,null,null,null,null,null,null,null, null,null,null,5,null,null,null,null,null, null,null,null,null,null,5,null,null,null, null,null,null,null,null,null,null,null,null, null,null,null,null,null,null,null,null,null, null,null,null,null,null,null,null,null,null, null,null,null,null,null,null,null,null,null];
+        puzzle.forEach((val, i) => cells[i].textContent = val || '');
+        renderTutorialStep();
+    }
+    function renderTutorialStep() {
+        const cells = Array.from(elements.tutorialGrid.children);
+        cells.forEach(c => c.className = 'tutorial-cell');
+        const currentStep = tutorialSteps[tutorialStep];
+        elements.tutorialText.textContent = currentStep.text;
+        currentStep.action(cells);
+        elements.tutorialStepIndicator.textContent = `Шаг ${tutorialStep + 1} из ${tutorialSteps.length}`;
+        elements.tutorialPrevBtn.disabled = tutorialStep === 0;
+        elements.tutorialNextBtn.textContent = (tutorialStep === tutorialSteps.length - 1) ? 'Завершить' : 'Далее';
+    }
 
     function init() {
         const startNewGame = () => { saveCurrentGame(); createGrid(); createNumberRow(); generatePuzzle(elements.difficulty.value); elements.message.textContent = ""; };
@@ -154,10 +186,11 @@
         elements.highlightBtn.addEventListener('click', ()=>{highlightEnabled=!highlightEnabled,elements.highlightBtn.textContent=`Подсветка: ${highlightEnabled?"ВКЛ":"ВЫКЛ"}`;if(!highlightEnabled){clearHighlights()}else{if(activeTool && activeTool !== 'erase'){highlightSimilarNumbers(activeTool)}else if(activeCell&&grid[activeCell[0]][activeCell[1]]){highlightSimilarNumbers(grid[activeCell[0]][activeCell[1]])}}});
         elements.settingsBtn.addEventListener('click', e => { e.stopPropagation(); elements.themePanel.classList.toggle('hidden'); });
         elements.recentGamesBtn.addEventListener('click', () => { populateRecentGames(); elements.recentGamesModal.classList.remove('hidden'); });
-        elements.tutorialBtn.addEventListener('click', () => { elements.tutorialModal.classList.remove('hidden'); playTutorialAnimation(); });
+        elements.tutorialBtn.addEventListener('click', () => { elements.tutorialModal.classList.remove('hidden'); playTutorial(); });
         elements.closeModalBtn.addEventListener('click', () => elements.recentGamesModal.classList.add('hidden'));
         elements.closeTutorialBtn.addEventListener('click', () => elements.tutorialModal.classList.add('hidden'));
-        elements.replayTutorialBtn.addEventListener('click', playTutorialAnimation);
+        elements.tutorialNextBtn.addEventListener('click', () => { if (tutorialStep < tutorialSteps.length - 1) { tutorialStep++; renderTutorialStep(); } else { elements.tutorialModal.classList.add('hidden'); } });
+        elements.tutorialPrevBtn.addEventListener('click', () => { if (tutorialStep > 0) { tutorialStep--; renderTutorialStep(); } });
         elements.themePanel.addEventListener('click', e => { e.stopPropagation(); if (e.target.closest('.theme-button')) { applyTheme(e.target.closest('.theme-button').dataset.theme); } });
         elements.recentGamesList.addEventListener('click', e => { const loadBtn = e.target.closest('.load-game-button'); const deleteBtn = e.target.closest('.delete-game-button'); if (loadBtn) { const gameId = loadBtn.dataset.id; const games = JSON.parse(localStorage.getItem('sudoku-recent-games')); const gameToLoad = games.find(g => g.savedAt === gameId); if (gameToLoad) loadGame(gameToLoad); } if (deleteBtn) { const gameId = deleteBtn.dataset.id; deleteGame(gameId); } });
         document.addEventListener('click', (e) => { if (!elements.gameContainer.contains(e.target) && !elements.recentGamesModal.contains(e.target) && !elements.tutorialModal.contains(e.target)) deselectCell(); elements.themePanel.classList.add('hidden'); });
